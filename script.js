@@ -462,7 +462,7 @@ function setupInterface(){
     ];
 
   document.getElementById("menu").innerHTML = menu.map(([id,label,icon]) => `
-    <button data-section="${id}" onclick="showSection('${id}')">
+    <button data-section="${id}" onclick="showSection('${id}'); closeMobileMenu();">
       <span class="nav-icon">${navIcon(icon)}</span>
       <span>${label}</span>
     </button>
@@ -1616,6 +1616,21 @@ function restoreDemoData(){
   saveData();
   renderAll();
   alert("Datos demo restaurados correctamente.");
+}
+
+
+function toggleMobileMenu(){
+  const sidebar = document.getElementById("sidebar");
+  const overlay = document.getElementById("mobileOverlay");
+  if(sidebar) sidebar.classList.toggle("open");
+  if(overlay) overlay.classList.toggle("show");
+}
+
+function closeMobileMenu(){
+  const sidebar = document.getElementById("sidebar");
+  const overlay = document.getElementById("mobileOverlay");
+  if(sidebar) sidebar.classList.remove("open");
+  if(overlay) overlay.classList.remove("show");
 }
 
 function updateClock(){
