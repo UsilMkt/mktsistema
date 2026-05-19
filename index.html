@@ -1,0 +1,862 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sistema USIL | Gestión de Actividades</title>
+  <link rel="stylesheet" href="styles_v17.css?v=17" />
+</head>
+<body>
+  <main id="loginView" class="login-view">
+    <section class="login-card">
+      <div class="login-logo">
+        <img src="logo.png" alt="Logo USIL">
+      </div>
+
+      <p class="overline">Sistema institucional</p>
+      <h1>Gestión de Actividades Escolares</h1>
+      <p class="subtitle">Control de solicitudes, aprobaciones, materiales, inventario y reportes ejecutivos.</p>
+
+      <form onsubmit="login(event)" class="login-form">
+        <label>Correo institucional
+          <input id="email" type="email" placeholder="correo@usil.edu.pe" required>
+        </label>
+
+        <label>Contraseña
+          <input id="password" type="password" placeholder="Contraseña" required>
+        </label>
+
+        <button type="submit">Ingresar</button>
+      </form>
+
+      <div class="demo-box">
+        <strong>Accesos de prueba</strong>
+        <span>Gerencia: gerencia@usil.edu.pe / 123456</span>
+        <span>Promotor: andrea@usil.edu.pe / 123456</span>
+      </div>
+    </section>
+  </main>
+
+  <div id="appView" class="app hidden">
+    <aside class="sidebar">
+      <div class="brand">
+        <img src="logo.png" alt="Logo USIL">
+      </div>
+
+      <div class="user-card">
+        <small>Sesión activa</small>
+        <h3 id="userName">Ivanna</h3>
+        <p id="userRole">Gerencia</p>
+      </div>
+
+      <nav id="menu" class="menu"></nav>
+
+      <div class="time-card">
+        <span id="sideDate">--</span>
+        <strong id="sideClock">--:--</strong>
+      </div>
+
+      <button class="logout" onclick="logout()">Cerrar sesión</button>
+    </aside>
+
+    <main class="main">
+      <header class="topbar">
+        <div>
+          <p id="greeting" class="overline">Buenos días, Ivanna</p>
+          <h1 id="pageTitle">Dashboard ejecutivo</h1>
+          <p id="pageDescription">Vista general de control y seguimiento.</p>
+        </div>
+
+        <div class="header-actions">
+          <div class="date-pill">
+            <span id="todayText">--</span>
+            <strong id="liveClock">--:--</strong>
+          </div>
+          <button class="ghost demo-restore" onclick="restoreDemoData()">Restaurar demo</button><button class="btn-primary" onclick="showSection('formFacultad')">Nueva solicitud</button>
+        </div>
+      </header>
+
+      <section class="content">
+        <!-- DASHBOARD -->
+        <section id="dashboard" class="section">
+          <div class="dashboard-reference">
+            <div class="dash-left">
+              <div id="managerMessage" class="ivanna-message hidden">
+                <div class="ivanna-message-icon">
+                  <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="M12 3l7 4v5c0 5-3.5 8-7 9-3.5-1-7-4-7-9V7l7-4z"/>
+                    <path d="M9 12.5l2 2 4-5"/>
+                  </svg>
+                </div>
+                <div class="ivanna-message-text">
+                  <p>Mensaje para ti</p>
+                  <h2>No reniegues, Ivanna. Todo está bajo control.</h2>
+                  <span>Monitoreo operativo activo. Sigue liderando con calma y estrategia.</span>
+                </div>
+                <div class="ivanna-message-art">
+                  <span></span>
+                  <span></span>
+                  <span></span>
+                </div>
+              </div>
+
+              <div class="kpi-row">
+                <article class="kpi-ref">
+                  <div class="kpi-icon-svg blue">
+                    <svg viewBox="0 0 24 24"><path d="M7 3h7l4 4v14H7V3z"/><path d="M14 3v5h5"/><path d="M9 13h6M9 17h6"/></svg>
+                  </div>
+                  <div>
+                    <span>Solicitudes totales</span>
+                    <strong id="kpiTotal">0</strong>
+                    <small id="kpiTotalDetail">Registros activos</small>
+                  </div>
+                </article>
+
+                <article class="kpi-ref">
+                  <div class="kpi-icon-svg amber">
+                    <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><path d="M12 7v5l3 2"/></svg>
+                  </div>
+                  <div>
+                    <span>Pendientes</span>
+                    <strong id="kpiPendientes">0</strong>
+                    <small>Requieren revisión</small>
+                  </div>
+                </article>
+
+                <article class="kpi-ref">
+                  <div class="kpi-icon-svg purple">
+                    <svg viewBox="0 0 24 24"><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>
+                  </div>
+                  <div>
+                    <span>Observadas</span>
+                    <strong id="kpiObservadas">0</strong>
+                    <small>Con alerta de control</small>
+                  </div>
+                </article>
+
+                <article class="kpi-ref">
+                  <div class="kpi-icon-svg green">
+                    <svg viewBox="0 0 24 24"><path d="M16 11a4 4 0 1 0-8 0"/><path d="M4 21a8 8 0 0 1 16 0"/><circle cx="12" cy="7" r="3"/></svg>
+                  </div>
+                  <div>
+                    <span>Participantes estimados</span>
+                    <strong id="kpiParticipantes">0</strong>
+                    <small>Impacto total</small>
+                  </div>
+                </article>
+              </div>
+
+              <div class="ref-grid">
+                <div class="panel ref-card">
+                  <div class="ref-card-head">
+                    <div>
+                      <h2>Seguimiento por estado</h2>
+                      <p>Calculado con las solicitudes registradas.</p>
+                    </div>
+                  </div>
+                  <div class="state-content">
+                    <div class="donut ref-donut" id="statusDonut"></div>
+                    <div class="legend ref-legend" id="statusLegend"></div>
+                  </div>
+                  <button class="link-button" onclick="showSection('facultad')">Ver detalle de solicitudes</button>
+                </div>
+
+                <div class="panel ref-card">
+                  <div class="ref-card-head">
+                    <div>
+                      <h2>Solicitudes por facultad</h2>
+                      <p>Datos generados desde Facultad y CGE.</p>
+                    </div>
+                  </div>
+                  <div id="dashboardFacultyChart" class="small-bars"></div>
+                  <button class="link-button" onclick="showSection('reportes')">Ver reportes completos</button>
+                </div>
+
+                <div class="panel ref-card">
+                  <div class="ref-card-head">
+                    <div>
+                      <h2>Actividades próximas</h2>
+                      <p>Ordenadas por fecha de evento.</p>
+                    </div>
+                  </div>
+                  <div id="upcomingList" class="upcoming-ref"></div>
+                  <button class="link-button" onclick="showSection('facultad')">Ver todas las actividades</button>
+                </div>
+              </div>
+
+              <div class="bottom-grid">
+                <div class="panel quick-note-card">
+                  <div>
+                    <h2>Notas rápidas</h2>
+                    <p>Guarda una anotación personal sin salir del dashboard.</p>
+                  </div>
+                  <div class="quick-note">
+                    <input id="quickNoteInput" placeholder="Escribe una nota...">
+                    <button class="btn-primary" onclick="saveQuickNote()">Guardar nota</button>
+                  </div>
+                </div>
+
+                <div class="panel reminders-card">
+                  <div class="ref-card-head">
+                    <div>
+                      <h2>Recordatorios próximos</h2>
+                      <p>Tomados del módulo Notas y recordatorios.</p>
+                    </div>
+                    <button class="ghost" onclick="showSection('notas')">Ver todos</button>
+                  </div>
+                  <div id="dashboardReminderList" class="dashboard-reminders"></div>
+                </div>
+              </div>
+            </div>
+
+            <aside class="dash-right">
+              <div class="panel calendar-card">
+                <div class="calendar-head">
+                  <h2>Calendario</h2>
+                  <button class="link-button" onclick="showSection('facultad')">Ver agenda</button>
+                </div>
+                <div id="calendarMonth" class="calendar-month">Calendario</div>
+                <div id="calendarGrid" class="calendar-grid-mini"></div>
+              </div>
+
+              <div class="panel recent-card">
+                <div class="ref-card-head">
+                  <div>
+                    <h2>Actividad reciente</h2>
+                    <p>Últimos registros del sistema.</p>
+                  </div>
+                </div>
+                <div id="recentActivityList" class="recent-list"></div>
+              </div>
+
+              <div class="panel critical-card">
+                <div class="ref-card-head">
+                  <div>
+                    <h2>Inventario crítico</h2>
+                    <p>Según stock mínimo configurado.</p>
+                  </div>
+                  <button class="link-button" onclick="showSection('inventario')">Ver inventario</button>
+                </div>
+                <div id="criticalInventoryList" class="critical-list"></div>
+              </div>
+            </aside>
+          </div>
+        </section>
+
+        <!-- FACULTAD -->
+        <section id="facultad" class="section hidden">
+          <div class="panel">
+            <div class="demo-loaded-banner">Datos demo cargados para presentación</div><div class="panel-head">
+              <div>
+                <h2>Facultad y CGE</h2>
+                <p>Solicitudes de actividades académicas para colegios.</p>
+              </div>
+              <button class="btn-primary" onclick="showSection('formFacultad')">Registrar solicitud</button>
+            </div>
+
+            <div class="filters">
+              <input id="facSearch" placeholder="Buscar colegio, actividad o carrera" oninput="renderFacultad()">
+              <select id="facStatus" onchange="renderFacultad()">
+                <option value="">Todos los estados</option>
+                <option>Pendiente</option>
+                <option>Aprobada</option>
+                <option>Observada</option>
+                <option>Ejecutada</option>
+              </select>
+              <select id="facTipo" onchange="renderFacultad()">
+                <option value="">Tipo de colegio</option>
+                <option>TOP</option>
+                <option>CADENA</option>
+                <option>PLATINUM</option>
+                <option>GOLD</option>
+                <option>SILVER</option>
+                <option>BRONCE</option>
+              </select>
+            </div>
+
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Colegio</th>
+                    <th>Actividad</th>
+                    <th>Promotor</th>
+                    <th>Evento</th>
+                    <th>Modalidad</th>
+                    <th>Participantes</th>
+                    <th>Material</th>
+                    <th>Estado</th>
+                    <th>Detalle</th>
+                  </tr>
+                </thead>
+                <tbody id="facTable"></tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- FORM FACULTAD -->
+        <section id="formFacultad" class="section hidden">
+          <div class="panel form-panel">
+            <div class="panel-head">
+              <div>
+                <h2>Registrar solicitud Facultad y CGE</h2>
+                <p>El promotor se asigna automáticamente según la cuenta.</p>
+              </div>
+            </div>
+
+            <div class="rule-panel">
+              <strong>Reglas de validación</strong>
+              <span>La solicitud debe registrarse con 48 horas hábiles de anticipación.</span>
+              <span>Silver y Bronce pasan a evaluación previa.</span>
+              <span>Si requiere taxi, dirección de recojo y retorno serán obligatorias.</span>
+            </div>
+
+            <form class="grid-form" onsubmit="saveFacultad(event)">
+              <label>Tipo de actividad
+                <select id="fTipoActividad" required>
+                  <option value="">Seleccionar</option>
+                  <option>ACTIVACIÓN</option>
+                  <option>TALLER</option>
+                  <option>CHARLA</option>
+                  <option>FERIA</option>
+                  <option>REUNIÓN</option>
+                </select>
+              </label>
+              <label>Código de colegio <input id="fCodigo" required></label>
+              <label>Tipo de colegio
+                <select id="fTipoColegio" required>
+                  <option value="">Seleccionar</option>
+                  <option>TOP</option>
+                  <option>CADENA</option>
+                  <option>PLATINUM</option>
+                  <option>GOLD</option>
+                  <option>SILVER</option>
+                  <option>BRONCE</option>
+                </select>
+              </label>
+              <label>Nombre del colegio <input id="fColegio" required></label>
+              <label>Facultad
+                <select id="fFacultad" required>
+                  <option value="">Seleccionar</option>
+                  <option>INGENIERÍA</option>
+                  <option>EMPRESARIALES</option>
+                  <option>PSICOLOGÍA</option>
+                  <option>ARQUITECTURA</option>
+                  <option>SALUD</option>
+                  <option>EDUCACIÓN</option>
+                </select>
+              </label>
+              <label>Carrera <input id="fCarrera" required></label>
+              <label>Nombre de actividad <input id="fActividad" required></label>
+              <label>Fecha de solicitud <input id="fFechaSolicitud" type="date" required></label>
+              <label>Fecha del evento <input id="fFechaEvento" type="date" required></label>
+              <label>Hora inicio <input id="fHoraInicio" type="time" required></label>
+              <label>Hora fin <input id="fHoraFin" type="time" required></label>
+              <label>Público objetivo
+                <select id="fPublico" required>
+                  <option>ALUMNOS</option>
+                  <option>DOCENTES</option>
+                  <option>PADRES</option>
+                  <option>PSICÓLOGOS</option>
+                </select>
+              </label>
+              <label>Grado <input id="fGrado" required placeholder="3RO, 4TO Y 5TO"></label>
+              <label>Número de participantes <input id="fParticipantes" type="number" min="1" required></label>
+              <label>Modalidad
+                <select id="fModalidad" required>
+                  <option>PRESENCIAL</option>
+                  <option>VIRTUAL</option>
+                  <option>HÍBRIDA</option>
+                </select>
+              </label>
+              <label>¿Se llevará material?
+                <select id="fMaterial" required>
+                  <option>NO</option>
+                  <option>SI</option>
+                  <option>PPT</option>
+                </select>
+              </label>
+              <label>¿Participan otras universidades?
+                <select id="fUniversidades" required>
+                  <option>NO</option>
+                  <option>SI</option>
+                </select>
+              </label>
+              <label>Lima / Provincia <input id="fLugar" required></label>
+              <label>¿Se ejecutó?
+                <select id="fEjecutado">
+                  <option>NO</option>
+                  <option>SI</option>
+                </select>
+              </label>
+              <label>¿Requiere taxi?
+                <select id="fTaxi" onchange="toggleTaxiRequired()">
+                  <option>NO</option>
+                  <option>SI</option>
+                </select>
+              </label>
+              <label>Dirección de recojo <input id="fRecojo"></label>
+              <label>Dirección de retorno <input id="fRetorno"></label>
+              <label>DNI docente <input id="fDni"></label>
+              <label>Docente asignada <input id="fDocente"></label>
+              <label>Celular <input id="fCelular"></label>
+              <label>Correo <input id="fCorreo" type="email"></label>
+
+              <div class="form-actions">
+                <button type="button" class="ghost" onclick="showSection('facultad')">Cancelar</button>
+                <button type="submit">Guardar solicitud</button>
+              </div>
+            </form>
+          </div>
+        </section>
+
+        <!-- OV -->
+        <section id="ov" class="section hidden">
+          <div class="panel">
+            <div class="panel-head">
+              <div>
+                <h2>Solicitudes OV</h2>
+                <p>Orientación vocacional, talleres, reuniones y capacitaciones.</p>
+              </div>
+              <button class="btn-primary" onclick="showSection('formOv')">Registrar OV</button>
+            </div>
+
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Colegio</th>
+                    <th>Actividad</th>
+                    <th>Promotor</th>
+                    <th>Fecha</th>
+                    <th>Población</th>
+                    <th>Psicólogo</th>
+                    <th>Costo</th>
+                  </tr>
+                </thead>
+                <tbody id="ovTable"></tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <section id="formOv" class="section hidden">
+          <div class="panel form-panel">
+            <div class="panel-head"><h2>Registrar Solicitud OV</h2></div>
+            <form class="grid-form" onsubmit="saveOv(event)">
+              <label>Código modular <input id="ovCodigo" required></label>
+              <label>Tipo de colegio <input id="ovTipo" required></label>
+              <label>Colegio <input id="ovColegio" required></label>
+              <label>Distrito <input id="ovDistrito" required></label>
+              <label>Tipo de actividad
+                <select id="ovTipoActividad">
+                  <option>TEST VOCACIONAL QE</option>
+                  <option>TALLER ALUMNOS</option>
+                  <option>TALLER DOCENTES</option>
+                  <option>REUNIÓN</option>
+                  <option>CAPACITACIÓN DIRECTOR / DOCENTE</option>
+                </select>
+              </label>
+              <label>Nombre de actividad <input id="ovActividad" required></label>
+              <label>Fecha <input id="ovFecha" type="date" required></label>
+              <label>Hora inicio <input id="ovInicio" type="time" required></label>
+              <label>Hora fin <input id="ovFin" type="time" required></label>
+              <label>Modalidad
+                <select id="ovModalidad"><option>PRESENCIAL</option><option>VIRTUAL</option></select>
+              </label>
+              <label>Cantidad <input id="ovCantidad" type="number" min="1" required></label>
+              <label>Población
+                <select id="ovPoblacion"><option>ALUMNOS</option><option>DOCENTE</option><option>PADRES</option><option>PSICÓLOGOS</option></select>
+              </label>
+              <label>Grado <input id="ovGrado"></label>
+              <label>Psicólogo a cargo <input id="ovPsicologo" required></label>
+              <label>Observación <input id="ovObservacion"></label>
+              <div class="form-actions">
+                <button type="button" class="ghost" onclick="showSection('ov')">Cancelar</button>
+                <button type="submit">Guardar OV</button>
+              </div>
+            </form>
+          </div>
+        </section>
+
+        <!-- MATERIAL -->
+        <section id="material" class="section hidden">
+          <div class="panel">
+            <div class="panel-head">
+              <div>
+                <h2>Solicitud de Materiales</h2>
+                <p>Las solicitudes aprobadas descuentan automáticamente el inventario.</p>
+              </div>
+              <button class="btn-primary" onclick="showSection('formMaterial')">Registrar material</button>
+            </div>
+
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Colegio</th>
+                    <th>Actividad</th>
+                    <th>Promotor</th>
+                    <th>Fecha</th>
+                    <th>Fichas</th>
+                    <th>Lapiceros</th>
+                    <th>Bolsas</th>
+                    <th>Estado</th>
+                    <th>Detalle</th>
+                  </tr>
+                </thead>
+                <tbody id="materialTable"></tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <section id="formMaterial" class="section hidden">
+          <div class="panel form-panel">
+            <div class="panel-head">
+              <h2>Registrar solicitud de material</h2>
+            </div>
+
+            <div class="rule-panel">
+              <strong>Regla de inventario</strong>
+              <span>La solicitud se descuenta del inventario cuando gerencia la aprueba.</span>
+              <span>Si no hay stock suficiente, la solicitud queda observada.</span>
+            </div>
+
+            <form class="grid-form" onsubmit="saveMaterial(event)">
+              <label>Código modular <input id="mCodigo" required></label>
+              <label>Colegio <input id="mColegio" required></label>
+              <label>Clasificación
+                <select id="mClasificacion"><option>PLATINUM</option><option>GOLD</option><option>SILVER</option><option>BRONCE</option></select>
+              </label>
+              <label>Tipo de actividad <input id="mTipoActividad" required></label>
+              <label>Fecha de actividad <input id="mFecha" type="date" required></label>
+              <label>Fichas <input id="mFichas" type="number" min="0" value="0"></label>
+              <label>Lapiceros <input id="mLapiceros" type="number" min="0" value="0"></label>
+              <label>Mugs <input id="mMugs" type="number" min="0" value="0"></label>
+              <label>Libretas ecológicas <input id="mLibretas" type="number" min="0" value="0"></label>
+              <label>Posits <input id="mPosits" type="number" min="0" value="0"></label>
+              <label>Bolsas <input id="mBolsas" type="number" min="0" value="0"></label>
+              <label>Tomatodos <input id="mTomatodos" type="number" min="0" value="0"></label>
+              <div class="form-actions">
+                <button type="button" class="ghost" onclick="showSection('material')">Cancelar</button>
+                <button type="submit">Guardar solicitud</button>
+              </div>
+            </form>
+          </div>
+        </section>
+
+        <!-- INVENTARIO -->
+        <section id="inventario" class="section hidden">
+          <div class="inventory-layout">
+            <div class="panel inventory-main">
+              <div class="panel-head">
+                <div>
+                  <h2>Inventario de materiales</h2>
+                  <p>Stock disponible, consumo y control de reposiciones.</p>
+                </div>
+                <div class="inventory-actions">
+                  <button class="ghost" onclick="openProductForm()">Nuevo producto</button>
+                  <button class="btn-primary" onclick="openStockEditor()">Ajustar stock</button>
+                </div>
+              </div>
+
+              <div class="inventory-summary">
+                <article>
+                  <span>Productos activos</span>
+                  <strong id="invProducts">0</strong>
+                </article>
+                <article>
+                  <span>Stock total</span>
+                  <strong id="invTotalStock">0</strong>
+                </article>
+                <article>
+                  <span>Stock crítico</span>
+                  <strong id="invCritical">0</strong>
+                </article>
+              </div>
+
+              <div class="inventory-toolbar">
+                <input id="inventorySearch" placeholder="Buscar producto" oninput="renderInventory()">
+                <select id="inventoryStatus" onchange="renderInventory()">
+                  <option value="">Todos los estados</option>
+                  <option value="Disponible">Disponible</option>
+                  <option value="Bajo">Stock bajo</option>
+                  <option value="Crítico">Crítico</option>
+                </select>
+              </div>
+
+              <div class="inventory-table-wrap">
+                <table class="inventory-table">
+                  <thead>
+                    <tr>
+                      <th>Producto</th>
+                      <th>Categoría</th>
+                      <th>Stock</th>
+                      <th>Mínimo</th>
+                      <th>Estado</th>
+                      <th>Control</th>
+                    </tr>
+                  </thead>
+                  <tbody id="inventoryTable"></tbody>
+                </table>
+              </div>
+            </div>
+
+            <aside class="panel inventory-side">
+              <h2>Resumen de consumo</h2>
+              <p>Materiales con mayor movimiento por solicitudes aprobadas.</p>
+              <div id="inventoryUsage" class="usage-list"></div>
+            </aside>
+          </div>
+
+          <div id="inventoryModal" class="modal hidden">
+            <div class="modal-card">
+              <div class="modal-head">
+                <div>
+                  <h2 id="modalTitle">Nuevo producto</h2>
+                  <p id="modalText">Registra un nuevo material para el inventario.</p>
+                </div>
+                <button class="icon-btn" onclick="closeInventoryModal()">×</button>
+              </div>
+
+              <form id="productForm" class="modal-form" onsubmit="saveProduct(event)">
+                <label>Nombre del producto
+                  <input id="productName" required placeholder="Ej. Cuadernos">
+                </label>
+                <label>Categoría
+                  <select id="productCategory">
+                    <option>Merchandising</option>
+                    <option>Material impreso</option>
+                    <option>Útiles</option>
+                    <option>Otros</option>
+                  </select>
+                </label>
+                <label>Stock inicial
+                  <input id="productStock" type="number" min="0" required>
+                </label>
+                <label>Stock mínimo
+                  <input id="productMin" type="number" min="0" required>
+                </label>
+                <div class="form-actions">
+                  <button type="button" class="ghost" onclick="closeInventoryModal()">Cancelar</button>
+                  <button type="submit">Guardar producto</button>
+                </div>
+              </form>
+
+              <form id="stockForm" class="modal-form hidden" onsubmit="saveStockAdjustment(event)">
+                <label>Producto
+                  <select id="stockProduct"></select>
+                </label>
+                <label>Tipo de movimiento
+                  <select id="stockMovement">
+                    <option value="add">Ingreso</option>
+                    <option value="subtract">Salida</option>
+                    <option value="set">Definir stock exacto</option>
+                  </select>
+                </label>
+                <label>Cantidad
+                  <input id="stockAmount" type="number" min="0" required>
+                </label>
+                <label>Observación
+                  <input id="stockNote" placeholder="Ej. Reposición mensual">
+                </label>
+                <div class="form-actions">
+                  <button type="button" class="ghost" onclick="closeInventoryModal()">Cancelar</button>
+                  <button type="submit">Aplicar ajuste</button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </section>
+
+        <!-- NOTAS -->
+        <section id="notas" class="section hidden">
+          <div class="notes-layout">
+            <div class="panel notes-main">
+              <div class="panel-head">
+                <div>
+                  <h2>Notas y recordatorios</h2>
+                  <p>Espacio personal para anotar pendientes, acuerdos y recordatorios operativos.</p>
+                </div>
+                <button class="btn-primary" onclick="openNoteModal()">Nueva anotación</button>
+              </div>
+
+              <div class="notes-summary">
+                <article>
+                  <span>Notas activas</span>
+                  <strong id="notesActive">0</strong>
+                </article>
+                <article>
+                  <span>Recordatorios pendientes</span>
+                  <strong id="notesPending">0</strong>
+                </article>
+                <article>
+                  <span>Alta prioridad</span>
+                  <strong id="notesHigh">0</strong>
+                </article>
+              </div>
+
+              <div class="notes-toolbar">
+                <input id="notesSearch" placeholder="Buscar nota o recordatorio" oninput="renderNotes()">
+                <select id="notesFilter" onchange="renderNotes()">
+                  <option value="">Todos</option>
+                  <option value="Nota">Notas</option>
+                  <option value="Recordatorio">Recordatorios</option>
+                  <option value="Pendiente">Pendientes</option>
+                  <option value="Completado">Completados</option>
+                </select>
+              </div>
+
+              <div id="notesList" class="notes-list"></div>
+            </div>
+
+            <aside class="panel notes-side">
+              <h2>Próximos recordatorios</h2>
+              <p>Compromisos ordenados por fecha.</p>
+              <div id="reminderList" class="reminder-list"></div>
+            </aside>
+          </div>
+
+          <div id="noteModal" class="modal hidden">
+            <div class="modal-card">
+              <div class="modal-head">
+                <div>
+                  <h2>Nueva anotación</h2>
+                  <p>Registra una nota libre o un recordatorio con fecha.</p>
+                </div>
+                <button class="icon-btn" onclick="closeNoteModal()">×</button>
+              </div>
+
+              <form class="modal-form note-form" onsubmit="saveNote(event)">
+                <label>Tipo
+                  <select id="noteType" onchange="toggleReminderDate()">
+                    <option>Nota</option>
+                    <option>Recordatorio</option>
+                  </select>
+                </label>
+
+                <label>Prioridad
+                  <select id="notePriority">
+                    <option>Normal</option>
+                    <option>Alta</option>
+                    <option>Baja</option>
+                  </select>
+                </label>
+
+                <label class="full-field">Título
+                  <input id="noteTitle" required placeholder="Ej. Coordinar docente para feria">
+                </label>
+
+                <label class="full-field">Descripción
+                  <textarea id="noteDescription" required placeholder="Escribe el detalle de la anotación..."></textarea>
+                </label>
+
+                <label id="reminderDateField">Fecha de recordatorio
+                  <input id="noteDate" type="date">
+                </label>
+
+                <div class="form-actions">
+                  <button type="button" class="ghost" onclick="closeNoteModal()">Cancelar</button>
+                  <button type="submit">Guardar</button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </section>
+
+        <!-- REPORTES -->
+        <section id="reportes" class="section hidden">
+          <div class="reports-page">
+            <div class="panel report-hero">
+              <div>
+                <p class="overline">Control gerencial</p>
+                <h2>Reportes ejecutivos</h2>
+                <p>Indicadores para evaluar cobertura, carga operativa, cumplimiento, materiales y eficiencia de las actividades.</p>
+              </div>
+              <div class="report-actions">
+                <button class="ghost">Filtrar periodo</button>
+                <button class="btn-primary">Exportar reporte</button>
+              </div>
+            </div>
+
+            <div class="report-summary executive">
+              <article>
+                <span>Colegios atendidos</span>
+                <strong id="repColegios">0</strong>
+                <small>Colegios únicos registrados</small>
+              </article>
+              <article>
+                <span>Participantes impactados</span>
+                <strong id="repParticipantes">0</strong>
+                <small>Entre Facultad/CGE y OV</small>
+              </article>
+              <article>
+                <span>Solicitudes con material</span>
+                <strong id="repConMaterial">0</strong>
+                <small>Requieren control logístico</small>
+              </article>
+              <article>
+                <span>Solicitudes con taxi</span>
+                <strong id="repConTaxi">0</strong>
+                <small>Requieren coordinación externa</small>
+              </article>
+            </div>
+
+            <div class="reports-grid-pro">
+              <section class="chart-card large">
+                <div class="chart-head">
+                  <div>
+                    <h3>Actividades por mes</h3>
+                    <p>Permite ver concentración de demanda y meses críticos.</p>
+                  </div>
+                </div>
+                <div id="chartMeses" class="vertical-chart"></div>
+              </section>
+
+              <section class="chart-card">
+                <h3>Carga por promotor</h3>
+                <p>Distribución de solicitudes registradas por responsable.</p>
+                <div id="chartPromotores" class="bar-chart"></div>
+              </section>
+
+              <section class="chart-card">
+                <h3>Colegios por categoría</h3>
+                <p>Control de atención según tipo de colegio.</p>
+                <div id="chartColegios" class="bar-chart"></div>
+              </section>
+
+              <section class="chart-card">
+                <h3>Facultades más solicitadas</h3>
+                <p>Demanda académica por área.</p>
+                <div id="chartFacultades" class="bar-chart"></div>
+              </section>
+
+              <section class="chart-card">
+                <h3>Consumo de materiales</h3>
+                <p>Materiales más utilizados en actividades.</p>
+                <div id="chartMateriales" class="bar-chart"></div>
+              </section>
+
+              <section class="chart-card">
+                <h3>Indicadores operativos</h3>
+                <p>Señales para mejorar planificación y control.</p>
+                <div id="operationalIndicators" class="indicator-list"></div>
+              </section>
+
+              <section class="chart-card large">
+                <h3>Ranking de colegios con mayor actividad</h3>
+                <p>Colegios con más solicitudes registradas en el periodo.</p>
+                <div id="schoolRanking" class="ranking-list"></div>
+              </section>
+            </div>
+          </div>
+        </section>
+      </section>
+    </main>
+  </div>
+
+  <script src="script_v17.js?v=17"></script>
+</body>
+</html>
