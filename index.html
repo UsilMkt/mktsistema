@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Sistema USIL | Gestión de Actividades</title>
-  <link rel="stylesheet" href="styles_v17.css?v=17" />
+  <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
   <main id="loginView" class="login-view">
@@ -38,7 +38,8 @@
   </main>
 
   <div id="appView" class="app hidden">
-    <aside class="sidebar">
+    <div id="mobileOverlay" class="mobile-overlay" onclick="closeMobileMenu()"></div>
+    <aside id="sidebar" class="sidebar">
       <div class="brand">
         <img src="logo.png" alt="Logo USIL">
       </div>
@@ -67,7 +68,7 @@
           <p id="pageDescription">Vista general de control y seguimiento.</p>
         </div>
 
-        <div class="header-actions">
+        <button id="mobileMenuBtn" class="mobile-menu-btn" onclick="toggleMobileMenu()">Menú</button><div class="header-actions">
           <div class="date-pill">
             <span id="todayText">--</span>
             <strong id="liveClock">--:--</strong>
@@ -857,6 +858,6 @@
     </main>
   </div>
 
-  <script src="script_v17.js?v=17"></script>
+  <script src="script.js"></script>
 </body>
 </html>
