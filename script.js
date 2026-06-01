@@ -1,8 +1,3 @@
-const users = {
-  "gerencia@usil.edu.pe": { password: "123456", name: "Ivanna", role: "admin" },
-  "andrea@usil.edu.pe": { password: "123456", name: "Andrea Rojas", role: "promotor" }
-};
-
 let currentUser = null;
 let editingFacultadId = null;
 let editingOvId = null;
