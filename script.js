@@ -4,6 +4,9 @@ const users = {
 };
 
 let currentUser = null;
+let editingFacultadId = null;
+let editingOvId = null;
+const OV_HOURLY_RATE = 80;
 
 let inventory = {
   fichas: { label: "Fichas", stock: 470, initial: 600 },
@@ -154,6 +157,11 @@ function saveData(){
 
 function loadData(){
   resetDemoData();
+  facultad = JSON.parse(localStorage.getItem("usil_facultad") || JSON.stringify(facultad));
+  ov = JSON.parse(localStorage.getItem("usil_ov") || JSON.stringify(ov));
+  materiales = JSON.parse(localStorage.getItem("usil_materiales") || JSON.stringify(materiales));
+  inventory = JSON.parse(localStorage.getItem("usil_inventory") || JSON.stringify(inventory));
+  notes = JSON.parse(localStorage.getItem("usil_notes") || JSON.stringify(notes));
 }
 function resetDemoData(){
   facultad = [
@@ -269,6 +277,7 @@ function resetDemoData(){
 
   ov = [
     {
+      id: 201,
       promotor: "Andrea Rojas",
       colegio: "Colegio San Ignacio",
       actividad: "Test vocacional QE",
@@ -278,9 +287,11 @@ function resetDemoData(){
       cantidad: 90,
       poblacion: "ALUMNOS",
       psicologo: "Nikolle Ojeda",
+      horas: 1,
       costo: 80
     },
     {
+      id: 202,
       promotor: "Carlos Medina",
       colegio: "Saco Oliveros",
       actividad: "Taller de orientación vocacional",
@@ -290,9 +301,11 @@ function resetDemoData(){
       cantidad: 60,
       poblacion: "ALUMNOS",
       psicologo: "Carlos Solórzano",
+      horas: 1.5,
       costo: 120
     },
     {
+      id: 203,
       promotor: "Andrea Rojas",
       colegio: "Lord Byron",
       actividad: "Capacitación docente",
@@ -302,7 +315,8 @@ function resetDemoData(){
       cantidad: 35,
       poblacion: "DOCENTES",
       psicologo: "Camila Saldaña",
-      costo: 100
+      horas: 1.5,
+      costo: 120
     }
   ];
 
@@ -419,7 +433,7 @@ function login(event){
   }
 
   currentUser = user;
-  resetDemoData();
+  loadData();
   document.getElementById("loginView").classList.add("hidden");
   document.getElementById("appView").classList.remove("hidden");
 
@@ -427,10 +441,7 @@ function login(event){
   showSection("dashboard");
   renderAll();
 
-  setTimeout(() => {
-    resetDemoData();
-    renderAll();
-  }, 100);
+  setTimeout(renderAll, 100);
 }
 
 function logout(){
@@ -835,6 +846,43 @@ function renderCalendarMini(){
   grid.innerHTML = cells.join("");
 }
 
+function setValue(id, value){
+  const el = document.getElementById(id);
+  if(el) el.value = value ?? "";
+}
+
+function parseTimeToMinutes(value){
+  if(!value) return null;
+  const text = String(value).trim().toLowerCase();
+  const match = text.match(/(\d{1,2}):(\d{2})/);
+  if(!match) return null;
+  let hour = Number(match[1]);
+  const minute = Number(match[2]);
+  if(text.includes("p. m.") || text.includes("pm")){
+    if(hour < 12) hour += 12;
+  }
+  if(text.includes("a. m.") || text.includes("am")){
+    if(hour === 12) hour = 0;
+  }
+  return hour * 60 + minute;
+}
+
+function calculateHours(start, end){
+  const startMinutes = parseTimeToMinutes(start);
+  let endMinutes = parseTimeToMinutes(end);
+  if(startMinutes === null || endMinutes === null) return 0;
+  if(endMinutes < startMinutes) endMinutes += 24 * 60;
+  return Math.round(((endMinutes - startMinutes) / 60) * 100) / 100;
+}
+
+function calculateOvCost(start, end){
+  return Math.round(calculateHours(start, end) * OV_HOURLY_RATE * 100) / 100;
+}
+
+function money(value){
+  return `S/ ${Number(value || 0).toFixed(2).replace(".00", "")}`;
+}
+
 function renderFacultad(){
   const table = document.getElementById("facTable");
   if(!table) return;
@@ -853,7 +901,7 @@ function renderFacultad(){
   if(rows.length === 0){
     table.innerHTML = `
       <tr>
-        <td colspan="9" class="empty-row">
+        <td colspan="10" class="empty-row">
           No hay registros para mostrar con los filtros actuales.
         </td>
       </tr>
@@ -872,6 +920,7 @@ function renderFacultad(){
       <td>${x.material || "-"}</td>
       <td><span class="badge ${x.estado || "Pendiente"}">${x.estado || "Pendiente"}</span></td>
       <td><span class="table-link" onclick="showRequestDetail('${x.colegio || "-"}', '${x.actividad || "-"}')">Ver detalle</span></td>
+      <td><button class="ghost table-action" onclick="editFacultad('${x.id}')">Editar</button></td>
     </tr>
   `).join("");
 }
@@ -885,7 +934,7 @@ function renderOv(){
   if(rows.length === 0){
     table.innerHTML = `
       <tr>
-        <td colspan="7" class="empty-row">
+        <td colspan="9" class="empty-row">
           No hay solicitudes OV registradas para mostrar.
         </td>
       </tr>
@@ -901,7 +950,9 @@ function renderOv(){
       <td>${x.fecha || "-"}<br><small>${x.inicio || ""} ${x.fin ? " - " + x.fin : ""}</small></td>
       <td>${x.cantidad || x.participantes || 0} ${x.poblacion || ""}</td>
       <td>${x.psicologo || "-"}</td>
-      <td>S/ ${x.costo || 0}</td>
+      <td>${x.horas || calculateHours(x.inicio, x.fin)} h</td>
+      <td>${money(x.costo || calculateOvCost(x.inicio, x.fin))}</td>
+      <td><button class="ghost table-action" onclick="editOv('${x.id}')">Editar</button></td>
     </tr>
   `).join("");
 }
@@ -1157,6 +1208,8 @@ function renderReports(){
   const participantes = facultad.reduce((s,x)=>s+Number(x.participantes||0),0) + ov.reduce((s,x)=>s+Number(x.cantidad||0),0);
   const conMaterial = facultad.filter(x=>x.material && x.material !== "NO").length + materiales.length;
   const conTaxi = facultad.filter(x=>x.taxi === "SI").length;
+  const ovTotal = ov.reduce((s,x)=>s+Number(x.costo || calculateOvCost(x.inicio, x.fin) || 0),0);
+  const ovHoras = ov.reduce((s,x)=>s+Number(x.horas || calculateHours(x.inicio, x.fin) || 0),0);
 
   const byFacultad = countBy(allFac, "facultad");
   const byPromotor = countBy(allRequests, "promotor");
@@ -1178,11 +1231,16 @@ function renderReports(){
   document.getElementById("repParticipantes").textContent = participantes;
   document.getElementById("repConMaterial").textContent = conMaterial;
   document.getElementById("repConTaxi").textContent = conTaxi;
+  document.getElementById("repOvTotal").textContent = money(ovTotal);
+  document.getElementById("repOvHoras").textContent = `${ovHoras.toFixed(2).replace(".00", "")} h`;
 
   renderMonthlyChart();
   renderBarChart("chartPromotores", byPromotor);
   renderBarChart("chartColegios", byTipoColegio);
   renderBarChart("chartFacultades", byFacultad);
+  renderClientReport();
+  renderSchoolMonthReport();
+  renderBarChart("chartOvMoney", sumBy(ov, "psicologo", item => Number(item.costo || calculateOvCost(item.inicio, item.fin) || 0)), money);
   renderBarChart("chartMateriales", materialUse);
   renderOperationalIndicators();
   renderSchoolRanking(bySchool);
@@ -1245,6 +1303,69 @@ function renderSchoolRanking(data){
   `).join("");
 }
 
+function renderClientReport(){
+  const box = document.getElementById("clientReport");
+  if(!box) return;
+
+  const rows = Object.values([...facultad, ...ov].reduce((acc,item)=>{
+    const school = item.colegio || "Sin colegio";
+    if(!acc[school]){
+      acc[school] = { colegio: school, total: 0, charlas: 0, promotores: new Set(), lastDate: "", lastActivity: "" };
+    }
+    const activity = `${item.tipoActividad || ""} ${item.actividad || ""}`.toLowerCase();
+    acc[school].total += 1;
+    acc[school].charlas += activity.includes("charla") ? 1 : 0;
+    if(item.promotor) acc[school].promotores.add(item.promotor);
+    const date = item.fechaEvento || item.fecha || "";
+    if(date >= acc[school].lastDate){
+      acc[school].lastDate = date;
+      acc[school].lastActivity = item.actividad || item.tipoActividad || "-";
+    }
+    return acc;
+  },{})).sort((a,b)=>b.total-a.total).slice(0,8);
+
+  box.innerHTML = rows.map(row => `
+    <div class="report-row">
+      <div>
+        <b>${row.colegio}</b>
+        <small>${Array.from(row.promotores).join(", ") || "Sin promotor"} · Ultima: ${row.lastDate || "-"} · ${row.lastActivity}</small>
+      </div>
+      <span>${row.charlas} charlas</span>
+      <strong>${row.total}</strong>
+    </div>
+  `).join("");
+}
+
+function renderSchoolMonthReport(){
+  const box = document.getElementById("schoolMonthReport");
+  if(!box) return;
+
+  const monthLabels = ["Ene","Feb","Mar","Abr","May","Jun","Jul","Ago","Sep","Oct","Nov","Dic"];
+  const rows = [...facultad, ...ov].map(item => {
+    const dateText = item.fechaEvento || item.fecha || "";
+    const date = new Date(dateText + "T00:00:00");
+    return {
+      month: isNaN(date) ? "Sin mes" : monthLabels[date.getMonth()],
+      date: dateText,
+      colegio: item.colegio || "-",
+      actividad: item.actividad || item.tipoActividad || "-",
+      promotor: item.promotor || "-",
+      modalidad: item.modalidad || "-"
+    };
+  }).sort((a,b)=>a.date.localeCompare(b.date)).slice(0,10);
+
+  box.innerHTML = rows.map(row => `
+    <div class="report-row">
+      <span>${row.month}</span>
+      <div>
+        <b>${row.colegio}</b>
+        <small>${row.actividad} · ${row.promotor} · ${row.modalidad}</small>
+      </div>
+      <strong>${row.date || "-"}</strong>
+    </div>
+  `).join("");
+}
+
 function showRequestDetail(colegio, actividad){
   alert(`Detalle de solicitud\\n\\nColegio: ${colegio}\\nActividad: ${actividad}`);
 }
@@ -1257,20 +1378,30 @@ function countBy(data, key){
   },{});
 }
 
+function sumBy(data, key, getter){
+  return data.reduce((acc,item)=>{
+    const value = item[key] || "Sin dato";
+    acc[value] = (acc[value] || 0) + getter(item);
+    return acc;
+  },{});
+}
+
 function topKey(obj){
   const entries = Object.entries(obj);
   if(entries.length === 0) return "--";
   return entries.sort((a,b)=>b[1]-a[1])[0][0];
 }
 
-function renderBarChart(id, data){
+function renderBarChart(id, data, formatter = value => value){
+  const target = document.getElementById(id);
+  if(!target) return;
   const entries = Object.entries(data).sort((a,b)=>b[1]-a[1]).slice(0,5);
   const max = Math.max(...entries.map(e=>e[1]), 1);
-  document.getElementById(id).innerHTML = entries.map(([label,value]) => `
+  target.innerHTML = entries.map(([label,value]) => `
     <div class="bar-row">
       <span title="${label}">${label}</span>
       <div class="bar-bg"><i style="width:${Math.round(value/max*100)}%"></i></div>
-      <b>${value}</b>
+      <b>${formatter(value)}</b>
     </div>
   `).join("");
 }
@@ -1363,6 +1494,66 @@ function diffHours(a,b){
   return (new Date(b+"T00:00:00") - new Date(a+"T00:00:00")) / 36e5;
 }
 
+function resetFacultadFormState(){
+  editingFacultadId = null;
+  const title = document.getElementById("facFormTitle");
+  const button = document.getElementById("facSubmitBtn");
+  if(title) title.textContent = "Registrar solicitud Facultad y CGE";
+  if(button) button.textContent = "Guardar solicitud";
+}
+
+function cancelFacultadEdit(){
+  document.querySelector("#formFacultad form")?.reset();
+  resetFacultadFormState();
+  showSection("facultad");
+}
+
+function openNewFacultad(){
+  document.querySelector("#formFacultad form")?.reset();
+  resetFacultadFormState();
+  showSection("formFacultad");
+}
+
+function editFacultad(id){
+  const item = facultad.find(x => String(x.id) === String(id));
+  if(!item) return;
+
+  editingFacultadId = id;
+  setValue("fTipoActividad", item.tipoActividad);
+  setValue("fCodigo", item.codigo);
+  setValue("fTipoColegio", item.tipoColegio);
+  setValue("fColegio", item.colegio);
+  setValue("fFacultad", item.facultad);
+  setValue("fCarrera", item.carrera);
+  setValue("fActividad", item.actividad);
+  setValue("fFechaSolicitud", item.fechaSolicitud);
+  setValue("fFechaEvento", item.fechaEvento);
+  setValue("fHoraInicio", item.horaInicio);
+  setValue("fHoraFin", item.horaFin);
+  setValue("fPublico", item.publico);
+  setValue("fGrado", item.grado);
+  setValue("fParticipantes", item.participantes);
+  setValue("fModalidad", item.modalidad?.toUpperCase?.() || item.modalidad);
+  setValue("fMaterial", item.material);
+  setValue("fUniversidades", item.universidades);
+  setValue("fLugar", item.lugar);
+  setValue("fEjecutado", item.estado === "Ejecutada" ? "SI" : "NO");
+  setValue("fTaxi", item.taxi);
+  setValue("fRecojo", item.recojo);
+  setValue("fRetorno", item.retorno);
+  setValue("fDni", item.dni);
+  setValue("fDocente", item.docente);
+  setValue("fCelular", item.celular);
+  setValue("fCorreo", item.correo);
+  toggleTaxiRequired();
+
+  const title = document.getElementById("facFormTitle");
+  const button = document.getElementById("facSubmitBtn");
+  if(title) title.textContent = "Modificar solicitud Facultad y CGE";
+  if(button) button.textContent = "Actualizar solicitud";
+  showSection("formFacultad");
+}
+
 function saveFacultad(event){
   event.preventDefault();
 
@@ -1377,7 +1568,7 @@ function saveFacultad(event){
   const colegio = document.getElementById("fColegio").value.trim();
   const hora = document.getElementById("fHoraInicio").value;
 
-  const duplicate = facultad.some(x => x.colegio.toLowerCase() === colegio.toLowerCase() && x.fechaEvento === fechaEvento && x.horaInicio === hora);
+  const duplicate = facultad.some(x => x.id !== editingFacultadId && x.colegio.toLowerCase() === colegio.toLowerCase() && x.fechaEvento === fechaEvento && x.horaInicio === hora);
 
   if(duplicate){
     alert("Ya existe una solicitud para ese colegio, fecha y hora.");
@@ -1387,9 +1578,9 @@ function saveFacultad(event){
   const tipoColegio = document.getElementById("fTipoColegio").value;
   const requiresReview = tipoColegio === "SILVER" || tipoColegio === "BRONCE";
 
-  facultad.push({
-    id:Date.now(),
-    promotor:currentUser.name,
+  const data = {
+    id:editingFacultadId || Date.now(),
+    promotor:editingFacultadId ? (facultad.find(x => x.id === editingFacultadId)?.promotor || currentUser.name) : currentUser.name,
     tipoActividad:document.getElementById("fTipoActividad").value,
     codigo:document.getElementById("fCodigo").value,
     tipoColegio,
@@ -1408,35 +1599,120 @@ function saveFacultad(event){
     material:document.getElementById("fMaterial").value,
     universidades:document.getElementById("fUniversidades").value,
     lugar:document.getElementById("fLugar").value,
-    estado:requiresReview ? "Observada" : "Pendiente",
+    estado:document.getElementById("fEjecutado").value === "SI" ? "Ejecutada" : (requiresReview ? "Observada" : "Pendiente"),
     taxi:document.getElementById("fTaxi").value,
     recojo:document.getElementById("fRecojo").value,
     retorno:document.getElementById("fRetorno").value,
-    docente:document.getElementById("fDocente").value
-  });
+    dni:document.getElementById("fDni").value,
+    docente:document.getElementById("fDocente").value,
+    celular:document.getElementById("fCelular").value,
+    correo:document.getElementById("fCorreo").value
+  };
+
+  if(editingFacultadId){
+    facultad = facultad.map(item => item.id === editingFacultadId ? data : item);
+  } else {
+    facultad.push(data);
+  }
 
   alert(requiresReview ? "Solicitud guardada. Requiere evaluación previa." : "Solicitud guardada correctamente.");
   event.target.reset();
+  resetFacultadFormState();
   saveData();
   showSection("facultad");
 }
 
+function resetOvFormState(){
+  editingOvId = null;
+  const title = document.getElementById("ovFormTitle");
+  const button = document.getElementById("ovSubmitBtn");
+  if(title) title.textContent = "Registrar Solicitud OV";
+  if(button) button.textContent = "Guardar OV";
+}
+
+function cancelOvEdit(){
+  document.querySelector("#formOv form")?.reset();
+  resetOvFormState();
+  showSection("ov");
+}
+
+function openNewOv(){
+  document.querySelector("#formOv form")?.reset();
+  resetOvFormState();
+  showSection("formOv");
+}
+
+function editOv(id){
+  const item = ov.find(x => String(x.id) === String(id));
+  if(!item) return;
+
+  editingOvId = id;
+  setValue("ovCodigo", item.codigo);
+  setValue("ovTipo", item.tipoColegio || item.tipo);
+  setValue("ovColegio", item.colegio);
+  setValue("ovDistrito", item.distrito);
+  setValue("ovTipoActividad", item.tipoActividad);
+  setValue("ovActividad", item.actividad);
+  setValue("ovFecha", item.fecha);
+  setValue("ovInicio", item.inicio);
+  setValue("ovFin", item.fin);
+  setValue("ovModalidad", item.modalidad);
+  setValue("ovCantidad", item.cantidad || item.participantes);
+  setValue("ovPoblacion", item.poblacion);
+  setValue("ovGrado", item.grado);
+  setValue("ovPsicologo", item.psicologo);
+  setValue("ovObservacion", item.observacion);
+
+  const title = document.getElementById("ovFormTitle");
+  const button = document.getElementById("ovSubmitBtn");
+  if(title) title.textContent = "Modificar Solicitud OV";
+  if(button) button.textContent = "Actualizar OV";
+  showSection("formOv");
+}
+
 function saveOv(event){
   event.preventDefault();
-  ov.push({
-    promotor:currentUser.name,
+  const inicio = document.getElementById("ovInicio").value;
+  const fin = document.getElementById("ovFin").value;
+  const horas = calculateHours(inicio, fin);
+
+  if(horas <= 0){
+    alert("Revisa la hora de inicio y fin para calcular el pago OV.");
+    return;
+  }
+
+  const data = {
+    id:editingOvId || Date.now(),
+    promotor:editingOvId ? (ov.find(x => x.id === editingOvId)?.promotor || currentUser.name) : currentUser.name,
+    codigo:document.getElementById("ovCodigo").value,
+    tipoColegio:document.getElementById("ovTipo").value,
     colegio:document.getElementById("ovColegio").value,
+    distrito:document.getElementById("ovDistrito").value,
+    tipoActividad:document.getElementById("ovTipoActividad").value,
     actividad:document.getElementById("ovActividad").value,
     fecha:document.getElementById("ovFecha").value,
-    inicio:document.getElementById("ovInicio").value,
-    fin:document.getElementById("ovFin").value,
+    inicio,
+    fin,
+    modalidad:document.getElementById("ovModalidad").value,
     cantidad:Number(document.getElementById("ovCantidad").value),
     poblacion:document.getElementById("ovPoblacion").value,
+    grado:document.getElementById("ovGrado").value,
     psicologo:document.getElementById("ovPsicologo").value,
-    costo:80
-  });
-  alert("Solicitud OV guardada correctamente.");
+    observacion:document.getElementById("ovObservacion").value,
+    horas,
+    tarifaHora:OV_HOURLY_RATE,
+    costo:calculateOvCost(inicio, fin)
+  };
+
+  if(editingOvId){
+    ov = ov.map(item => item.id === editingOvId ? data : item);
+  } else {
+    ov.push(data);
+  }
+
+  alert(editingOvId ? "Solicitud OV actualizada correctamente." : "Solicitud OV guardada correctamente.");
   event.target.reset();
+  resetOvFormState();
   saveData();
   showSection("ov");
 }
@@ -1649,5 +1925,5 @@ updateClock();
 
 
 window.addEventListener("DOMContentLoaded", () => {
-  resetDemoData();
+  loadData();
 });
