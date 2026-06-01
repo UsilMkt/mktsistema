@@ -73,7 +73,7 @@
             <span id="todayText">--</span>
             <strong id="liveClock">--:--</strong>
           </div>
-          <button class="ghost demo-restore" onclick="restoreDemoData()">Restaurar demo</button><button class="btn-primary" onclick="showSection('formFacultad')">Nueva solicitud</button>
+          <button class="ghost demo-restore" onclick="restoreDemoData()">Restaurar demo</button><button class="btn-primary" onclick="openNewFacultad()">Nueva solicitud</button>
         </div>
       </header>
 
@@ -252,7 +252,7 @@
                 <h2>Facultad y CGE</h2>
                 <p>Solicitudes de actividades académicas para colegios.</p>
               </div>
-              <button class="btn-primary" onclick="showSection('formFacultad')">Registrar solicitud</button>
+              <button class="btn-primary" onclick="openNewFacultad()">Registrar solicitud</button>
             </div>
 
             <div class="filters">
@@ -288,6 +288,7 @@
                     <th>Material</th>
                     <th>Estado</th>
                     <th>Detalle</th>
+                    <th>Acciones</th>
                   </tr>
                 </thead>
                 <tbody id="facTable"></tbody>
@@ -301,7 +302,7 @@
           <div class="panel form-panel">
             <div class="panel-head">
               <div>
-                <h2>Registrar solicitud Facultad y CGE</h2>
+                <h2 id="facFormTitle">Registrar solicitud Facultad y CGE</h2>
                 <p>El promotor se asigna automáticamente según la cuenta.</p>
               </div>
             </div>
@@ -405,8 +406,8 @@
               <label>Correo <input id="fCorreo" type="email"></label>
 
               <div class="form-actions">
-                <button type="button" class="ghost" onclick="showSection('facultad')">Cancelar</button>
-                <button type="submit">Guardar solicitud</button>
+                <button type="button" class="ghost" onclick="cancelFacultadEdit()">Cancelar</button>
+                <button id="facSubmitBtn" type="submit">Guardar solicitud</button>
               </div>
             </form>
           </div>
@@ -420,7 +421,7 @@
                 <h2>Solicitudes OV</h2>
                 <p>Orientación vocacional, talleres, reuniones y capacitaciones.</p>
               </div>
-              <button class="btn-primary" onclick="showSection('formOv')">Registrar OV</button>
+              <button class="btn-primary" onclick="openNewOv()">Registrar OV</button>
             </div>
 
             <div class="table-wrap">
@@ -433,7 +434,9 @@
                     <th>Fecha</th>
                     <th>Población</th>
                     <th>Psicólogo</th>
+                    <th>Horas</th>
                     <th>Costo</th>
+                    <th>Acciones</th>
                   </tr>
                 </thead>
                 <tbody id="ovTable"></tbody>
@@ -444,7 +447,11 @@
 
         <section id="formOv" class="section hidden">
           <div class="panel form-panel">
-            <div class="panel-head"><h2>Registrar Solicitud OV</h2></div>
+            <div class="panel-head"><h2 id="ovFormTitle">Registrar Solicitud OV</h2></div>
+            <div class="rule-panel">
+              <strong>Pago por hora OV</strong>
+              <span>Tarifa estandar: S/ 80 por hora. El sistema calcula horas y fracciones segun inicio y fin.</span>
+            </div>
             <form class="grid-form" onsubmit="saveOv(event)">
               <label>Código modular <input id="ovCodigo" required></label>
               <label>Tipo de colegio <input id="ovTipo" required></label>
@@ -474,8 +481,8 @@
               <label>Psicólogo a cargo <input id="ovPsicologo" required></label>
               <label>Observación <input id="ovObservacion"></label>
               <div class="form-actions">
-                <button type="button" class="ghost" onclick="showSection('ov')">Cancelar</button>
-                <button type="submit">Guardar OV</button>
+                <button type="button" class="ghost" onclick="cancelOvEdit()">Cancelar</button>
+                <button id="ovSubmitBtn" type="submit">Guardar OV</button>
               </div>
             </form>
           </div>
@@ -801,7 +808,17 @@
               <article>
                 <span>Solicitudes con taxi</span>
                 <strong id="repConTaxi">0</strong>
-                <small>Requieren coordinación externa</small>
+                <small>Requieren coordinacion externa</small>
+              </article>
+              <article>
+                <span>Total OV en soles</span>
+                <strong id="repOvTotal">S/ 0</strong>
+                <small>Acumulado por horas y fracciones</small>
+              </article>
+              <article>
+                <span>Horas OV pagadas</span>
+                <strong id="repOvHoras">0</strong>
+                <small>Tarifa estandar S/ 80/hora</small>
               </article>
             </div>
 
@@ -834,6 +851,24 @@
                 <div id="chartFacultades" class="bar-chart"></div>
               </section>
 
+              <section class="chart-card large">
+                <h3>Reporte por cliente</h3>
+                <p>Charlas y actividades por colegio, promotor responsable y ultima visita.</p>
+                <div id="clientReport" class="report-list"></div>
+              </section>
+
+              <section class="chart-card large">
+                <h3>Reporte de colegios por mes</h3>
+                <p>Detalle tipo agenda: mes, colegio, actividad, promotor y modalidad.</p>
+                <div id="schoolMonthReport" class="report-list"></div>
+              </section>
+
+              <section class="chart-card">
+                <h3>OV acumulado en plata</h3>
+                <p>Suma de pagos por psicologo y costo por horas.</p>
+                <div id="chartOvMoney" class="bar-chart"></div>
+              </section>
+
               <section class="chart-card">
                 <h3>Consumo de materiales</h3>
                 <p>Materiales más utilizados en actividades.</p>
@@ -858,6 +893,9 @@
     </main>
   </div>
 
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="config.js"></script>
   <script src="script.js"></script>
+  <script src="supabase-adapter.js"></script>
 </body>
 </html>
